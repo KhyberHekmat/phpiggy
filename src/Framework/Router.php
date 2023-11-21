@@ -7,6 +7,7 @@ namespace Framework;
 class Router
 {
     private array $routes = [];
+    private array $middlewares = [];
     public function add(string $method, string $path, array $controller)
     {
         $path = $this->normalizePath($path);
@@ -34,7 +35,22 @@ class Router
             }
             [$class, $function] = $route['controller'];
             $controllerInstance = $container ? $container->resolve($class) : new $class;
-            $controllerInstance->{$function}();
+            $action = fn () => $controllerInstance->{$function}();
+
+            foreach ($this->middlewares as $middleware) {
+                $middlewareInstance =  $container ?
+                    $container->resolve($middleware) : new $middleware;
+                $action = fn () => $middlewareInstance->process($action);
+            }
+
+            $action();
+
+            return;
         }
+    }
+
+    public function addMiddleware(string $middleware)
+    {
+        $this->middlewares[] = $middleware;
     }
 }
