@@ -20,14 +20,20 @@ class Validator
         $errors = [];
         foreach ($fields as $filedName => $rules) {
             foreach ($rules as $rule) {
+                $ruleParams = [];
+                if (str_contains($rule, ':')) {
+                    [$rule, $ruleParams] = explode(':', $rule);
+                    $ruleParams = explode(',', $ruleParams);
+                }
+
                 $ruleValidator = $this->rules[$rule];
-                if ($ruleValidator->validate($formData, $filedName, [])) {
+                if ($ruleValidator->validate($formData, $filedName, $ruleParams)) {
                     continue;
                 }
                 $errors[$filedName][] = $ruleValidator->getMessage(
                     $formData,
                     $filedName,
-                    []
+                    $ruleParams
                 );
             }
         }
